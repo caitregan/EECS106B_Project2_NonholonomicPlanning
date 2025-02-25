@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Starter code for EE106B Turtlebot Lab
 Author: Valmik Prabhu, Chris Correa
