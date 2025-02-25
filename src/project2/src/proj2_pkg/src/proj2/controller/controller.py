@@ -42,11 +42,14 @@ class BicycleModelController(object):
         start_t = rospy.Time.now()
         while not rospy.is_shutdown():
             t = (rospy.Time.now() - start_t).to_sec()
-            if t > plan.times[-1]:
+            if t > plan.times[-1] : #changed
                 break
             state, cmd = plan.get(t)
             self.step_control(state, cmd)
             rate.sleep()
+
+        #ADDED
+        #if np.linalg.norm(self.state[:2] - target_position)
         self.cmd([0, 0])
 
     def step_control(self, target_position, open_loop_input):
@@ -74,17 +77,17 @@ class BicycleModelController(object):
 
         #v_output = v_d
         v_output = open_loop_input[0]
-        omega_delta_output = 0
+        omega_delta_output = open_loop_input[1]
 
         #constants
-        d_max = 0.15 #max distance lane
-        tau = 0.5 #time headway in seconds
-        D = 0.25 #distance between cars
+        d_max = 0.1 #max distance lane
+        tau = 0.002 #time headway in seconds
+        D = 0.1 #distance between cars
         gamma = 1 #cbf scaling
-        a_max = 1.0 
+        a_max = 2.0 
         L = 0.1
 
-        v_d = 0.2 #desired velocity
+        v_d = 0.43 #desired velocity
 
         v = cp.Variable()
         omega_delta = cp.Variable()
@@ -94,38 +97,42 @@ class BicycleModelController(object):
         delta_2 = cp.Variable(nonneg=True)
         delta_3 = cp.Variable(nonneg=True)
 
-        p1 = 0.2
-        p2 = 0.2
-        p3 = 0.2 
-        p4 = 0.2 
-        p5 = 0.2
+        p1 = 0.01
+        p2 = 0.05
+        p3 = 0.01 
+        p4 = 0.01 
+        p5 = 0.01
 
-        c1 = 0.1 #what should these be
-        c2 = 0.1
-        c3 = 0.1
+        c1 = 0.05 #what should these be
+        c2 = 0.2
+        c3 = 0.5
 
         #CBF Constraints
         h_asr = D - tau * v
         #use the linear version just because we dont have the best hardware
-        h_lk = d_max - cp.abs(y) - (1/2) * (v*cp.tan(phi))**2/a_max 
+        h_lk = d_max - cp.abs(y) - (1/2) * (v*np.tan(phi))**2/a_max 
 
+        print("h_asr: ", h_asr)
+        print("h_lk: ", h_lk)
         #CLF Constraints
         V_1 = (v - v_d)**2
         V_2 = (theta - theta_d)**2 #angular velocity
         V_3 = (x - x_d)**2 + (y - y_d)**2 #changes from the paper implementation b/c using the bicycle model and only need to track position
 
         V_1_dot = 2 * (v - v_d) #* a #times vdot
-        V_2_dot = 2 * (theta - theta_d) * (v/L) * cp.tan(phi)
-        V_3_dot = 2 * (x - x_d) * v * cp.cos(theta) + 2 * (y - y_d) * v * cp.sin(theta)
+        V_2_dot = 2 * (theta - theta_d) * (v/L) * np.tan(phi)
+        V_3_dot = 2 * (x - x_d) * v * np.cos(theta) + 2 * (y - y_d) * v * np.sin(theta)
+        
         u = cp.vstack([v, omega_delta, delta_1, delta_2, delta_3])
         H = cp.diag([p1, p2, p3, p4, p5])
+        
         cost = cp.quad_form(u, H)
 
         objective = cp.Minimize(cost)
         constraints = [
             #v + (gamma/tau) * h_asr >= 0
-            v +  h_asr >= 0,
-            omega_delta + h_lk >= 0, 
+            v  >= 0, #do we need this? theres no car in front
+            #omega_delta + h_lk >= 0, 
             V_1_dot + c1*V_1 <= delta_1,
             V_2_dot + c2*V_2 <= delta_2,
             V_3_dot + c3*V_3 <= delta_3 
@@ -138,9 +145,11 @@ class BicycleModelController(object):
             v_output = v.value
         if omega_delta.value is not None:
             omega_delta_output = omega_delta.value
-            
-        self.cmd([v_output, omega_delta_output])
-
+        
+        print("vel:", v_output)
+        print("w_d:", omega_delta_output)
+        self.cmd([ v_output, omega_delta_output])
+        #self.cmd(open_loop_input)
 
     def cmd(self, msg):
         """
