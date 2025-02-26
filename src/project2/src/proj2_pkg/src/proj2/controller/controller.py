@@ -26,6 +26,10 @@ class BicycleModelController(object):
         self.pub = rospy.Publisher('/bicycle/cmd_vel', BicycleCommandMsg, queue_size=10)
         self.sub = rospy.Subscriber('/bicycle/state', BicycleStateMsg, self.subscribe)
         self.state = BicycleStateMsg()
+
+        #ADDED
+        self.plan = None
+
         rospy.on_shutdown(self.shutdown)
 
     def execute_plan(self, plan):
@@ -36,6 +40,9 @@ class BicycleModelController(object):
         ----------
         plan : :obj: Plan. See configuration_space.Plan
         """
+        #ADDED
+        self.plan = plan
+
         if len(plan) == 0:
             return
         rate = rospy.Rate(int(1 / plan.dt))
@@ -80,7 +87,7 @@ class BicycleModelController(object):
         omega_delta_output = open_loop_input[1]
 
         #constants
-        d_max = 0.1 #max distance lane
+        d_max = 0.25 #max distance lane
         tau = 0.002 #time headway in seconds
         D = 0.1 #distance between cars
         gamma = 1 #cbf scaling
@@ -98,22 +105,30 @@ class BicycleModelController(object):
         delta_3 = cp.Variable(nonneg=True)
 
         p1 = 0.01
-        p2 = 0.05
+        p2 = 0.0005
         p3 = 0.01 
         p4 = 0.01 
         p5 = 0.01
 
         c1 = 0.05 #what should these be
-        c2 = 0.2
+        c2 = 1.5
         c3 = 0.5
 
+        curr_plan= self.plan.get(rospy.Time.now().to_sec())
+        y_plan = curr_plan[1]
         #CBF Constraints
         h_asr = D - tau * v
         #use the linear version just because we dont have the best hardware
-        h_lk = d_max - cp.abs(y) - (1/2) * (v*np.tan(phi))**2/a_max 
-
-        print("h_asr: ", h_asr)
-        print("h_lk: ", h_lk)
+        v_lat = v * np.tan(phi)
+        y_lat = y - y_d
+        #y_lat = y - y_plan
+        print("y: ", y)
+        print("y_plan: ", y_d)
+        print("y_lat: ", y_lat)
+        #h_lk = d_max - np.sign(v_lat) * y_lat - (1/2) * (v_lat)**2/a_max #sign doesnt work bc convex function
+        h_lk = d_max - cp.abs(y_lat) - (1/4) * (v_lat)**2/a_max 
+        #print("h_asr: ", h_asr)
+        #print("h_lk: ", h_lk)
         #CLF Constraints
         V_1 = (v - v_d)**2
         V_2 = (theta - theta_d)**2 #angular velocity
@@ -131,8 +146,10 @@ class BicycleModelController(object):
         objective = cp.Minimize(cost)
         constraints = [
             #v + (gamma/tau) * h_asr >= 0
-            v  >= 0, #do we need this? theres no car in front
-            #omega_delta + h_lk >= 0, 
+            v  >= 0.0, #do we need this? theres no car in front
+            #omega_delta + h_lk >= 0.1, 
+            omega_delta >= 0.1,
+            omega_delta <= -0.1,
             V_1_dot + c1*V_1 <= delta_1,
             V_2_dot + c2*V_2 <= delta_2,
             V_3_dot + c3*V_3 <= delta_3 
@@ -146,8 +163,10 @@ class BicycleModelController(object):
         if omega_delta.value is not None:
             omega_delta_output = omega_delta.value
         
-        print("vel:", v_output)
-        print("w_d:", omega_delta_output)
+        print("vel_open:", open_loop_input[0])
+        print("w_d_open:", open_loop_input[1])
+        print("vel_closed:", v_output)
+        print("w_d_closed:", omega_delta_output)
         self.cmd([ v_output, omega_delta_output])
         #self.cmd(open_loop_input)
 
