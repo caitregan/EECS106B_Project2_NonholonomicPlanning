@@ -77,7 +77,7 @@ class BicycleModelController(object):
             None. It simply sends the computed command to the robot.
         """
 
-        '''
+        
         #implementing controller from paper "realizing simultaneous lane keepign and adaptive speed regulation on 
         # accesible mobile robot testbeds", while changing the model from unicycle to bicycle
         x, y, theta, phi = self.state
@@ -112,9 +112,9 @@ class BicycleModelController(object):
         p4 = 0.01 
         p5 = 0.01
 
-        c1 = 0.05 #what should these be
+        c1 = 0.5 #what should these be
         c2 = 1.5
-        c3 = 0.5
+        c3 = 0.1
 
         curr_plan= self.plan.get(rospy.Time.now().to_sec())
         y_plan = curr_plan[1]
@@ -170,9 +170,9 @@ class BicycleModelController(object):
         print("w_d_open:", open_loop_input[1])
         print("vel_closed:", v_output)
         print("w_d_closed:", omega_delta_output)
-        #self.cmd([ v_output, omega_delta_output])
-        '''
-        self.cmd(open_loop_input)
+        self.cmd([ v_output, omega_delta_output])
+        
+        #self.cmd(open_loop_input)
 
     def cmd(self, msg):
         """
