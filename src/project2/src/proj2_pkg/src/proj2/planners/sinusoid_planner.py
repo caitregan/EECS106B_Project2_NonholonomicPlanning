@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 """
 Starter code for EE106B Turtlebot Lab
 Author: Valmik Prabhu, Chris Correa
@@ -145,9 +145,15 @@ class SinusoidPlanner():
         """
         start_state_v = self.state2v(start_state)
         goal_state_v = self.state2v(goal_state)
+        
+        #constraint
+        goal_state_v[0] = np.clip(goal_state_v[0], 0, 5)
+
         delta_x = goal_state_v[0] - start_state_v[0]
 
-        v1 = delta_x/delta_t
+        #v1 = delta_x/delta_t 
+
+        v1 = delta_x/delta_t * np.cos(start_state[2])  #shouldnt we also multiply by cos?
         v2 = 0
 
         path, t = [], t0
@@ -181,6 +187,9 @@ class SinusoidPlanner():
         start_state_v = self.state2v(start_state)
         goal_state_v = self.state2v(goal_state)
         delta_phi = goal_state_v[1] - start_state_v[1]
+
+        #constraint
+        a2 = np.clip(delta_phi/delta_t, -self.max_u2, self.max_u2)
 
         v1 = 0
         v2 = delta_phi/delta_t
@@ -259,7 +268,7 @@ class SinusoidPlanner():
             how many seconds between each trajectory point
         delta_t : float
             how many seconds the trajectory should run for
-
+        [x, phi, alpha, y]
         Returns
         -------
         :obj: Plan
@@ -267,41 +276,56 @@ class SinusoidPlanner():
         """
         start_state_v = self.state2v(start_state)
         goal_state_v = self.state2v(goal_state)
+        
+        #constraint
+        goal_state_v[3] = np.clip(goal_state_v[3], 0, 5)
         delta_y = goal_state_v[3] - start_state_v[3]
 
         omega = 2*np.pi / delta_t
 
         a2 = min(1, self.phi_dist*omega) #arbitrary
         f = lambda phi: (1/self.l)*np.tan(phi) # This is from the car model
-        g = lambda alpha: alpha/(np.sqrt(1 - alpha))
-        phi_fn = lambda t: (a2/omega)*np.sin(omega*t) + start_state_v[1]
+        g = lambda alpha: alpha/(np.sqrt(1 - alpha**2))
+        #g = lambda alpha: alpha/(np.sqrt(1 - np.clip(alpha, -0.999, 0.999)))
+        phi_fn = lambda s: (a2/(2*omega))*np.sin(2*omega*s) + start_state_v[1]
 
-        thres = 0.05
+        thres = 0.01
         a1_min = 0
-        a1_max = 2 #what should this be? constraints
-        while (a1_max - a1_min) > thres:
+        a1_max = 25 #what should this be? constraints
+        #while (a1_max - a1_min) > thres:
+
+        max_iteration = 100
+        iteration = 0
+
+        while iteration < max_iteration:
+
+            iteration +=1
             a1_mid = (a1_max + a1_min)/2
 
+            print("a1_mid:", a1_mid)
             #steer_alpha(self, start_state, goal_state, t0 = 0, dt = 0.01, delta_t = 2):
             #alpha_fn = lambda t: SinusoidPlanner.steer_alpha(t, )
-            integrand_alpha = lambda t: f(phi_fn(t))*np.sin(omega*t)
-            alpha_fn = lambda t: (omega/np.pi) * quad(integrand_alpha, 0, t)[0] #use t or delta_t?
+            integrand_alpha = lambda s: f(phi_fn(s))*a1_mid*np.sin(omega*s) 
+            alpha_fn = lambda t: (quad(integrand_alpha, 0, t)[0] + start_state_v[2]) #use t or delta_t?
 
             integrand = lambda t: g(alpha_fn(t))*np.sin(omega*t)
-            #integrand = lambda t: g(SinusoidPlanner.steer_alpha(t))*np.sin(omega*t) #can we use steer_alpha to compute beta1?
             beta1 = (omega/np.pi) * quad(integrand, 0, delta_t)[0]
-
             G = a1_mid * (np.pi/omega) * beta1 #calculate G with the new a1
+
+            print("beta: ", beta1)
+            print("G:", G, "delta Y: ", delta_y, "diff: ", G-delta_y)
 
             if np.abs(G - delta_y) < thres: 
                 v1 = lambda t: a1_mid*np.sin(omega*(t))
-                v2 = lambda t: a2*np.cos(omega*(t))
+                v2 = lambda t: a2*np.cos(2*omega*(t))
 
                 path, t = [], t0
                 while t < t0 + delta_t:
+                    print("v1: ", v1(t-t0))
+                    print("v2: ", v2(t-t0))
                     path.append([t, v1(t-t0), v2(t-t0)])
                     t = t + dt
-                    return self.v_path_to_u_path(path, start_state, dt)
+                return self.v_path_to_u_path(path, start_state, dt)
                 
             elif(G < delta_y):
                 #bin_search() #upper half

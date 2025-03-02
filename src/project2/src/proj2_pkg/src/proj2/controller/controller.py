@@ -76,6 +76,8 @@ class BicycleModelController(object):
         Returns:
             None. It simply sends the computed command to the robot.
         """
+
+        '''
         #implementing controller from paper "realizing simultaneous lane keepign and adaptive speed regulation on 
         # accesible mobile robot testbeds", while changing the model from unicycle to bicycle
         x, y, theta, phi = self.state
@@ -123,8 +125,9 @@ class BicycleModelController(object):
         y_lat = y - y_d
         #y_lat = y - y_plan
         print("y: ", y)
-        print("y_plan: ", y_d)
-        print("y_lat: ", y_lat)
+        print("x: ", x)
+        #print("y_plan: ", y_d)
+        #print("y_lat: ", y_lat)
         #h_lk = d_max - np.sign(v_lat) * y_lat - (1/2) * (v_lat)**2/a_max #sign doesnt work bc convex function
         h_lk = d_max - cp.abs(y_lat) - (1/4) * (v_lat)**2/a_max 
         #print("h_asr: ", h_asr)
@@ -167,8 +170,9 @@ class BicycleModelController(object):
         print("w_d_open:", open_loop_input[1])
         print("vel_closed:", v_output)
         print("w_d_closed:", omega_delta_output)
-        self.cmd([ v_output, omega_delta_output])
-        #self.cmd(open_loop_input)
+        #self.cmd([ v_output, omega_delta_output])
+        '''
+        self.cmd(open_loop_input)
 
     def cmd(self, msg):
         """
