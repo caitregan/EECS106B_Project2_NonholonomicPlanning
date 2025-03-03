@@ -256,31 +256,72 @@ class BicycleConfigurationSpace(ConfigurationSpace):
         We assume that the robot is circular and has radius equal to robot_radius
         The state of the robot is defined as (x, y, theta, phi).
     """
-    def __init__(self, low_lims, high_lims, input_low_lims, input_high_lims, obstacles, robot_radius):
+    def __init__(self,
+                 x_bounds,
+                 y_bounds,
+                 start_config,
+                 end_config,
+                 obstacles,
+                 turning_radius=1.0,
+                 step_size=1.0,
+                 goal_bias=0.1,
+                 goal_zoom=0.1,
+                 dt=0.01):
+        
+        """parameters that need 
+        x_bounds = [x_min, x_max]
+        y_bounds = [y_min, y_max]
+        start_config: np.array(4) [x, y, theta, phi]
+        end_config: np.array(4) [x, y, theta, phi]
+        obstacles: tuple [x, y, r] s.t. r = radius
+        turning_radius: float
+        step_size: float 
+        goal_bias: float
+        goal_zoom: float
+        """
+        
+        # abstract class parameters that need to be implemented from superclass
         dim = 4
-        super(BicycleConfigurationSpace, self).__init__(dim, low_lims, high_lims, obstacles)
-        self.robot_radius = robot_radius
-        self.robot_length = 0.3
-        self.input_low_lims = input_low_lims
-        self.input_high_lims = input_high_lims
+        low_lims = [x_bounds[0], y_bounds[0], -math.pi, math.pi]
+        high_lims = [x_bounds[0], y_bounds[1], -math.pi, math.pi]
+        
+        super(BicycleConfigurationSpace, self).__init__(
+            dim=dim, 
+            low_lims=low_lims, 
+            high_lims=high_lims, 
+            obstacles=obstacles,
+            dt=dt)
+        
+        # attributes turtlebot needs to know its enviroment
+        self.x_min, self.x_max = x_bounds
+        self.y_min, self.y_max = y_bounds
+        self.start = tuple(start_config)
+        self.end = tuple(end_config)
+
+        # attributes that will aid in manuveability
+        self.turning_radius = turning_radius
+        self.step_size = step_size
+        self.max_steering = math.atan2(1.0, turning_radius)
+        
+        # probabilistic attributes that aid motion primatives from start -> end 
+        self.goal_bias_prob = goal_bias
+        self.goal_zoom_prob = goal_zoom
+
+        # initialize a circular permiter for our end goal
+        span_x = x_bounds[1] - x_bounds[0]
+        span_y = y_bounds[1] - y_bounds[0]
+        self.goal_zoom_radius = 0.2 * max(span_x, span_y)
+
+        
+        
 
     # current implementation for distance is from example 5.1: S0(2) metric using complex numbers from LaValle: Planning Alogirthms
     def distance(self, c1, c2):
         """
         c1 and c2 should be numpy.ndarrays of size (4,)
         """
-        x1, y1, theta1, _ = c1
-        x2, y2, theta2, _ = c2
 
-        dx = x2 - x1
-        dy = y2 - y1
-        pos_dist = math.hypot(dx, dy)
-
-        dtheta = abs(theta2 - theta1)
-        if dtheta > math.pi:
-            dtheta = 2 * math.pi -dtheta
-        
-        return pos_dist + self.dt * dtheta
+        pass
 
     def sample_config(self, *args):
         """
@@ -291,9 +332,8 @@ class BicycleConfigurationSpace(ConfigurationSpace):
         RRT implementation passes in the goal as an additional argument,
         which can be used to implement a goal-biasing heuristic.
         """
-        while True:
-            x = random.uniform(self.x_range[0], self.x_range[1])
-            y = random.uniform(self.y_range)
+
+        pass
 
     def check_collision(self, c):
         """
