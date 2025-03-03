@@ -340,7 +340,7 @@ class BicycleConfigurationSpace(ConfigurationSpace):
 
         pass
 
-    def check_collision(self, c):
+    def check_collision(self, config):
         """
         Returns true if a configuration c is in collision
         c should be a numpy.ndarray of size (4,)
@@ -358,7 +358,7 @@ class BicycleConfigurationSpace(ConfigurationSpace):
         """
         pass
 
-    def local_plan(self, c1, c2, dt=0.01):
+    def local_plan(self, config1, config2, dt=0.01):
         """
         Constructs a local plan from c1 to c2. Usually, you want to
         just come up with any plan without worrying about obstacles,
