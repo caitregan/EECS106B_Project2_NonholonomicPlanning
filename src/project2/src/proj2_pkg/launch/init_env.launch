@@ -1,5 +1,5 @@
 <launch>
-    <arg name="sim" default="true"/>
+    <arg name="sim" default="false"/>
     <arg name="start_position" default="1 1 0" />
     <arg name="map" default="empty.yaml" />
 
@@ -43,12 +43,12 @@
     <arg name="bicycle_command_topic" default="/bicycle/cmd_vel" />
     <arg name="sim_command_topic" default="/robot0/cmd_vel" />
     <arg name="sim_pose_topic" default="/robot0/odom" />
-    <arg name="turtlebot_command_topic" default="/mobile_base/commands/velocity" />
+    <arg name="turtlebot_command_topic" default="/cmd_vel" />
     <arg name="state_topic" default="/bicycle/state" />
 
     <!-- Frames -->
-    <arg name="fixed_frame" default="fake_odom" />
-    <arg name="robot_frame" default="base_link" />
+    <arg name="fixed_frame" default="odom" />
+    <arg name="robot_frame" default="base_footprint" />
 
     <!-- Length of imaginary car. -->
     <arg name="length" default="0.3" />
@@ -64,9 +64,9 @@
       type="bicycle_converter.py"
       output="screen">
 
-    <param name="converter/sim" value="$(arg sim)" />
+    <param name="converter/sim" value="$(arg sim_command_topic)" />
     <param name="converter/sim_command_topic" value="$(arg sim_command_topic)" />
-    <param name="converter/turtlebot_command_topic" value="$(arg turtlebot_command_topic)" />
+    <param name="converter/turtlebot_command_topic" value="$(arg turtlebot_command_topic)"  />
     <param name="converter/fixed_frame" value="$(arg fixed_frame)" />
     <param name="converter/robot_frame" value="$(arg robot_frame)" />
     <param name="converter/sim_pose_topic" value="$(arg sim_pose_topic)" />

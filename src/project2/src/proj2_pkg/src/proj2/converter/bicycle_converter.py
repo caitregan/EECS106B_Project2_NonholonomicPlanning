@@ -164,7 +164,7 @@ class BicycleConverter():
     	self.command_publisher.publish(Twist()) # Stop moving
 
 if __name__ == '__main__':
-    rospy.init_node("Bicycle Conversion", anonymous=True)
+    rospy.init_node("Bicycle_Conversion", anonymous=True)
     rospy.loginfo("To Stop Turtlebot hit Ctrl-C")
 
     converter = BicycleConverter()

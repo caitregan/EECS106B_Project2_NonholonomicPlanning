@@ -10,6 +10,7 @@ import sys
 #ADDED 
 import cvxpy as cp
 import sympy as sp
+from geometry_msgs.msg import Twist
 
 import tf2_ros
 import tf
@@ -24,6 +25,7 @@ class BicycleModelController(object):
         Executes a plan made by the planner
         """
         self.pub = rospy.Publisher('/bicycle/cmd_vel', BicycleCommandMsg, queue_size=10)
+        #self.pub = rospy.Publisher('/cmd_vel', Twist, queue_size=10)
         self.sub = rospy.Subscriber('/bicycle/state', BicycleStateMsg, self.subscribe)
         self.state = BicycleStateMsg()
 
