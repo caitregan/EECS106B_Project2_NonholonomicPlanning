@@ -264,12 +264,13 @@ class BicycleConfigurationSpace(ConfigurationSpace):
         self.input_low_lims = input_low_lims
         self.input_high_lims = input_high_lims
 
+    # current implementation for distance is from example 5.1: S0(2) metric using complex numbers from LaValle: Planning Alogirthms
     def distance(self, c1, c2):
         """
         c1 and c2 should be numpy.ndarrays of size (4,)
         """
-        x1, y1, theta1, phi2 = c1
-        x2, y2, theta2, phi2 = c2
+        x1, y1, theta1, _ = c1
+        x2, y2, theta2, _ = c2
 
         dx = x2 - x1
         dy = y2 - y1
@@ -290,7 +291,9 @@ class BicycleConfigurationSpace(ConfigurationSpace):
         RRT implementation passes in the goal as an additional argument,
         which can be used to implement a goal-biasing heuristic.
         """
-        pass
+        while True:
+            x = random.uniform(self.x_range[0], self.x_range[1])
+            y = random.uniform(self.y_range)
 
     def check_collision(self, c):
         """
