@@ -308,20 +308,25 @@ class BicycleConfigurationSpace(ConfigurationSpace):
         self.goal_zoom_prob = goal_zoom
 
         # initialize a circular permiter for our end goal
-        span_x = x_bounds[1] - x_bounds[0]
-        span_y = y_bounds[1] - y_bounds[0]
+        span_x = self.x_max - self.x_min
+        span_y = self.y_max - self.y_min
         self.goal_zoom_radius = 0.2 * max(span_x, span_y)
 
         
+    def distance(self, config1, config2):
+        """
+        configs should be numpy.ndarrays of size (4,) based on the bicycle dyanmics
+        """
+        # LaValle: Planning Algorithms -> (SO(2) metric space by comparing angles) ex. 5.2
         
+        x1, x2, theta1, phi1 = config1
+        y1, y2, theta2, phi2 = config2
 
-    # current implementation for distance is from example 5.1: S0(2) metric using complex numbers from LaValle: Planning Alogirthms
-    def distance(self, c1, c2):
-        """
-        c1 and c2 should be numpy.ndarrays of size (4,)
-        """
+        # complex number representation 'a + bi' between two vectors
+        point_a = x1 * x2
+        point_b = y1 * y2
 
-        pass
+        return math.acos(point_a + point_b)  
 
     def sample_config(self, *args):
         """
