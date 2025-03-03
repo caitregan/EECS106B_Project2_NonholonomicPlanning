@@ -381,7 +381,7 @@ class BicycleConfigurationSpace(ConfigurationSpace):
         c should be a numpy.ndarray of size (4,)
         obs = [x, y, r] s.t. r = radius 
         """
-        x, y, theta, _ = config
+        x, y, _, _ = config
         
         # boundaries of map will be considered collisons
         if x < self.x_min or x > self.x_max or y < self.y_min or y > self.y_max:
@@ -408,7 +408,29 @@ class BicycleConfigurationSpace(ConfigurationSpace):
         You should also ensure that the path does not exceed any state bounds,
         and the open loop inputs don't exceed input bounds.
         """
-        pass
+        
+        if not path:
+            return False
+        
+        # merge multiple path segments
+        combined_plan = Plan.chain_paths(*path)
+        if not combined_plan:
+            return False
+
+        # iterate through path segements in small increments
+        final_time = combined_plan.times[-1]
+        t = 0.0
+        while t <= final_time:
+            position, control = combined_plan.get(t)
+            if self.check_collision(position):
+                return True
+            t += 0.05
+        
+        end_pos, _ = combined_plan.get(final_time)
+        if self.check_collision(end_pos):
+            return True
+        
+        return False
 
     def local_plan(self, config1, config2, dt=0.01):
         """
