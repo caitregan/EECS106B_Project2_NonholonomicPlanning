@@ -184,6 +184,7 @@ class BicycleModelController(object):
         ----------
         msg : numpy.ndarray
         """
+        #converter = BicycleConverter()
         self.pub.publish(BicycleCommandMsg(*msg))
 
     def subscribe(self, msg):
