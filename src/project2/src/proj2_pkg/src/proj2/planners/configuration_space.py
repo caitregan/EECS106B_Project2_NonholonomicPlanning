@@ -379,8 +379,25 @@ class BicycleConfigurationSpace(ConfigurationSpace):
         """
         Returns true if a configuration c is in collision
         c should be a numpy.ndarray of size (4,)
+        obs = [x, y, r] s.t. r = radius 
         """
-        pass
+        x, y, theta, _ = config
+        
+        # boundaries of map will be considered collisons
+        if x < self.x_min or x > self.x_max or y < self.y_min or y > self.y_max:
+            return True
+        
+        # collisons occur near circular obstacles
+        if self.obstacles is not None:
+            for obs in self.obstacles:
+                obs_x, obs_y, obs_r = obs
+
+                # distance formula centered at (obs_x, obs_y) with radius obs_r
+                dist_squared = (x - obs_x)**2 + (y - obs_y)**2
+
+                if dist_squared <= (obs_r)**2:
+                    return True
+        return False
 
     def check_path_collision(self, path):
         """
