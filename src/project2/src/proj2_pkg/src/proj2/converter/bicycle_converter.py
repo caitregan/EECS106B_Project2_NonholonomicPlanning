@@ -78,15 +78,21 @@ class BicycleConverter():
         self.command = BicycleCommandMsg()
         if self.sim:
             self.sim_subscriber = rospy.Subscriber(self.sim_pose_topic, Odometry, self.update_sim_pose)
+            print("in sim signifier")
             self.unicycle_command_topic = self.sim_command_topic
 
         else:
             self.tf_buffer = tf2_ros.Buffer()
             self.tf_listener = tf2_ros.TransformListener(self.tf_buffer)
+            print("in real signifier")
             self.unicycle_command_topic = self.turtlebot_command_topic
 
             # resetting stuff
             self.reset_odom = rospy.Publisher('/mobile_base/commands/reset_odometry', EmptyMsg, queue_size=10)
+        
+        #ADDED
+        self.unicycle_command_topic = self.turtlebot_command_topic
+
         self.command_publisher = rospy.Publisher(self.unicycle_command_topic, Twist, queue_size = 1)
         self.state_publisher = rospy.Publisher(self.state_topic, BicycleStateMsg, queue_size = 1)
         self.subscriber = rospy.Subscriber(self.bicycle_command_topic, BicycleCommandMsg, self.command_listener)
@@ -94,6 +100,7 @@ class BicycleConverter():
         rospy.on_shutdown(self.shutdown)
 
     def command_listener(self, msg):
+        print("at command listener")
         msg.steering_rate = max(min(msg.steering_rate, self.max_steering_rate), -self.max_steering_rate)
         msg.linear_velocity = max(min(msg.linear_velocity, self.max_linear_velocity), -self.max_linear_velocity)
 
@@ -146,7 +153,8 @@ class BicycleConverter():
 
             self.state.phi = self.state.phi + self.command.steering_rate/self.rate_hz
             self.state.phi = max(min(self.state.phi, self.max_steering_angle), -self.max_steering_angle)
-
+            
+            print("publishing to cmd_vel")
             self.command_publisher.publish(output)
 
             self.rate.sleep()
