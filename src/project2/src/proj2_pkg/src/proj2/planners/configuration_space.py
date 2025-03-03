@@ -158,18 +158,7 @@ class ConfigurationSpace(object):
             the chosen metric.
         """
 
-        x1, y1, theta1 = c1
-        x2, y2, theta2 = c2
-
-        dx = x2 - x1
-        dy = y2 - y1
-        pos_dist = math.hypot(dx, dy)
-
-        dtheta = abs(theta2 - theta1)
-        if dtheta > math.pi:
-            dtheta = 2 * math.pi - dtheta
-
-        return pos_dist + self.orientation_weight * dtheta
+        pass
 
 
     def sample_config(self, *args):
@@ -182,13 +171,7 @@ class ConfigurationSpace(object):
             Returns a new configuration sampled at random from the configuration
             space.
         """
-        while True:
-            x = random.uniform(self.x_range[0], self.x_range[1])
-            y = random.uniform(self.y_range[0], self.y_range[1])
-            theta = random.uniform(-math.pi, math.pi)  # random orientation in [-pi, pi)
-            state = (x, y, theta)
-            if self.is_collision_free(state):
-                return state
+        pass
 
     def check_collision(self, c):
         """
@@ -285,7 +268,18 @@ class BicycleConfigurationSpace(ConfigurationSpace):
         """
         c1 and c2 should be numpy.ndarrays of size (4,)
         """
-        pass
+        x1, y1, theta1, phi2 = c1
+        x2, y2, theta2, phi2 = c2
+
+        dx = x2 - x1
+        dy = y2 - y1
+        pos_dist = math.hypot(dx, dy)
+
+        dtheta = abs(theta2 - theta1)
+        if dtheta > math.pi:
+            dtheta = 2 * math.pi -dtheta
+        
+        return pos_dist + self.dt * dtheta
 
     def sample_config(self, *args):
         """
