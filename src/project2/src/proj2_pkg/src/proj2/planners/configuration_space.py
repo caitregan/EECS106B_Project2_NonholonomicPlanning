@@ -296,7 +296,7 @@ class BicycleConfigurationSpace(ConfigurationSpace):
         self.x_min, self.x_max = x_bounds
         self.y_min, self.y_max = y_bounds
         self.start = tuple(start_config)
-        self.end = tuple(end_config)
+        self.goal = tuple(end_config)
 
         # attributes that will aid in manuveability
         self.turning_radius = turning_radius
@@ -338,7 +338,42 @@ class BicycleConfigurationSpace(ConfigurationSpace):
         which can be used to implement a goal-biasing heuristic.
         """
 
-        pass
+        r = random.sample()
+        if r < self.goal_bias_prob:
+            sample = self.goal
+
+        elif r < self.goal_zoom_prob + self.goal_bias_prob:
+
+            # sample near goal
+            gx, gy, gtheta, gphi = self.goal
+            raidus = self.goal_zoom_radius
+            angle = random.random() * 2 * math.pi
+            dist = random.random() * raidus
+            sx = max(self.x_min, min(self.x_max, gx + dist * math.cos(angle)))
+            sy = max(self.y_min, min(self.y_max, gy + dist * math.sin(angle)))
+
+            # goal bias
+            if random.random() < 0.5:
+                stheta = gtheta + (random.random() * 0.5 - 0.25) * math.pi 
+            else:
+                stheta = random.uniform(-math.pi, math.pi)
+            sphi = random.uniform(-self.max_steering, self.max_steering)
+            sample = (sx, sy, (stheta + math.pi) % (2 * math.pi) - math.pi, sphi)
+
+        else:
+            # uniform sampling in state space
+            sx = random.uniform(self.x_min, self.x_max)
+            sy = random.uniform(self.y_min, self.y_max)
+            stheta = random.uniform(-math.pi, math.pi)
+            sphi = random.uniform(-self.max_steering, self.max_steering)
+            sample = (sx, sy, stheta, sphi)
+        
+        # retry sample configuration until collison-free sample is found
+        if self.check_collision(sample):
+            return self.sample_config()
+        return sample
+        
+
 
     def check_collision(self, config):
         """
