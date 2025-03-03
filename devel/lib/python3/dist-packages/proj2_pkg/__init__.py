@@ -6,7 +6,7 @@ from os import path as os_path
 from pkgutil import extend_path
 from sys import path as sys_path
 
-__extended_path = '/home/caitlin/project2/src/project2/src/proj2_pkg/src'.split(';')
+__extended_path = '/home/cc/ee106b/sp25/class/ee106b-abw/EECS106B_Project2_NonholonomicPlanning/src/project2/src/proj2_pkg/src'.split(';')
 for p in reversed(__extended_path):
     sys_path.insert(0, p)
     del p

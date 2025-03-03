@@ -1,7 +1,7 @@
 file(REMOVE_RECURSE
-  "/home/caitlin/project2/devel/share/roseus/ros/proj2_pkg/manifest.l"
-  "/home/caitlin/project2/devel/share/roseus/ros/proj2_pkg/msg/BicycleCommandMsg.l"
-  "/home/caitlin/project2/devel/share/roseus/ros/proj2_pkg/msg/BicycleStateMsg.l"
+  "/home/cc/ee106b/sp25/class/ee106b-abw/EECS106B_Project2_NonholonomicPlanning/devel/share/roseus/ros/proj2_pkg/manifest.l"
+  "/home/cc/ee106b/sp25/class/ee106b-abw/EECS106B_Project2_NonholonomicPlanning/devel/share/roseus/ros/proj2_pkg/msg/BicycleCommandMsg.l"
+  "/home/cc/ee106b/sp25/class/ee106b-abw/EECS106B_Project2_NonholonomicPlanning/devel/share/roseus/ros/proj2_pkg/msg/BicycleStateMsg.l"
   "CMakeFiles/proj2_pkg_generate_messages_eus"
 )
 

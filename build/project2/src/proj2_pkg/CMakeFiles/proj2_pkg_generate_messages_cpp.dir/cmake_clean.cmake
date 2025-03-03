@@ -1,6 +1,6 @@
 file(REMOVE_RECURSE
-  "/home/caitlin/project2/devel/include/proj2_pkg/BicycleCommandMsg.h"
-  "/home/caitlin/project2/devel/include/proj2_pkg/BicycleStateMsg.h"
+  "/home/cc/ee106b/sp25/class/ee106b-abw/EECS106B_Project2_NonholonomicPlanning/devel/include/proj2_pkg/BicycleCommandMsg.h"
+  "/home/cc/ee106b/sp25/class/ee106b-abw/EECS106B_Project2_NonholonomicPlanning/devel/include/proj2_pkg/BicycleStateMsg.h"
   "CMakeFiles/proj2_pkg_generate_messages_cpp"
 )
 

@@ -1,6 +1,6 @@
 file(REMOVE_RECURSE
-  "/home/caitlin/project2/devel/share/common-lisp/ros/proj2_pkg/msg/BicycleCommandMsg.lisp"
-  "/home/caitlin/project2/devel/share/common-lisp/ros/proj2_pkg/msg/BicycleStateMsg.lisp"
+  "/home/cc/ee106b/sp25/class/ee106b-abw/EECS106B_Project2_NonholonomicPlanning/devel/share/common-lisp/ros/proj2_pkg/msg/BicycleCommandMsg.lisp"
+  "/home/cc/ee106b/sp25/class/ee106b-abw/EECS106B_Project2_NonholonomicPlanning/devel/share/common-lisp/ros/proj2_pkg/msg/BicycleStateMsg.lisp"
   "CMakeFiles/proj2_pkg_generate_messages_lisp"
 )
 

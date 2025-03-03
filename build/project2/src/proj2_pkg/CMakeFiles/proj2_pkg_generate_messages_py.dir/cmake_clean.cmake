@@ -1,7 +1,7 @@
 file(REMOVE_RECURSE
-  "/home/caitlin/project2/devel/lib/python3/dist-packages/proj2_pkg/msg/_BicycleCommandMsg.py"
-  "/home/caitlin/project2/devel/lib/python3/dist-packages/proj2_pkg/msg/_BicycleStateMsg.py"
-  "/home/caitlin/project2/devel/lib/python3/dist-packages/proj2_pkg/msg/__init__.py"
+  "/home/cc/ee106b/sp25/class/ee106b-abw/EECS106B_Project2_NonholonomicPlanning/devel/lib/python3/dist-packages/proj2_pkg/msg/_BicycleCommandMsg.py"
+  "/home/cc/ee106b/sp25/class/ee106b-abw/EECS106B_Project2_NonholonomicPlanning/devel/lib/python3/dist-packages/proj2_pkg/msg/_BicycleStateMsg.py"
+  "/home/cc/ee106b/sp25/class/ee106b-abw/EECS106B_Project2_NonholonomicPlanning/devel/lib/python3/dist-packages/proj2_pkg/msg/__init__.py"
   "CMakeFiles/proj2_pkg_generate_messages_py"
 )
 

@@ -1,10 +1,10 @@
 
 "use strict";
 
-let BicycleStateMsg = require('./BicycleStateMsg.js');
 let BicycleCommandMsg = require('./BicycleCommandMsg.js');
+let BicycleStateMsg = require('./BicycleStateMsg.js');
 
 module.exports = {
-  BicycleStateMsg: BicycleStateMsg,
   BicycleCommandMsg: BicycleCommandMsg,
+  BicycleStateMsg: BicycleStateMsg,
 };

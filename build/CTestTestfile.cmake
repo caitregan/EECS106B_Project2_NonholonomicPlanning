@@ -1,17 +1,8 @@
 # CMake generated Testfile for 
-# Source directory: /home/caitlin/project2/src
-# Build directory: /home/caitlin/project2/build
+# Source directory: /home/cc/ee106b/sp25/class/ee106b-abw/EECS106B_Project2_NonholonomicPlanning/src
+# Build directory: /home/cc/ee106b/sp25/class/ee106b-abw/EECS106B_Project2_NonholonomicPlanning/build
 # 
 # This file includes the relevant testing commands required for 
 # testing this directory and lists subdirectories to be tested as well.
 subdirs("gtest")
-subdirs("stdr_simulator/stdr_launchers")
-subdirs("stdr_simulator/stdr_msgs")
-subdirs("stdr_simulator/stdr_resources")
-subdirs("stdr_simulator/stdr_simulator")
-subdirs("stdr_simulator/stdr_parser")
-subdirs("stdr_simulator/stdr_robot")
-subdirs("stdr_simulator/stdr_samples")
-subdirs("stdr_simulator/stdr_server")
-subdirs("stdr_simulator/stdr_gui")
 subdirs("project2/src/proj2_pkg")
