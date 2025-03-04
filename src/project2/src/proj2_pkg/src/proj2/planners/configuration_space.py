@@ -408,30 +408,37 @@ class BicycleConfigurationSpace(ConfigurationSpace):
         You should also ensure that the path does not exceed any state bounds,
         and the open loop inputs don't exceed input bounds.
         """
-        
-        if not path:
-            return False
-        
-        # merge multiple path segments
-        combined_plan = Plan.chain_paths(*path)
-        if not combined_plan:
+
+        if path is None:
             return False
 
-        # iterate through path segements in small increments
+        if isinstance(path, Plan):
+            path_list = [path]
+        else:
+            path_list = path 
+
+        
+        combined_plan = Plan.chain_paths(*path_list)
+        if not combined_plan or len(combined_plan) == 0:
+            return False
+
+
         final_time = combined_plan.times[-1]
         t = 0.0
+    
+        step_for_collision_check = 0.05
 
         while t <= final_time:
-            position, control = combined_plan.get(t)
+            position, _ = combined_plan.get(t)
             if self.check_collision(position):
                 return True
-            t += 0.05
-        
+            t += step_for_collision_check
+
         end_pos, _ = combined_plan.get(final_time)
         if self.check_collision(end_pos):
             return True
-        
-        return False
+
+        return False 
 
     def local_plan(self, config1, config2, dt=0.01):
         """
@@ -479,6 +486,45 @@ class BicycleConfigurationSpace(ConfigurationSpace):
             (self.step_size, -self.max_steering),
              (-self.step_size, self.max_steering),
              (-self.step_size, -self.max_steering)]
+
+        best_plan = None
+        best_dist = float('inf')
+
+        T = 1.0
+        num_steps = int(T / dt) + 1
+
+        for (speed, steer) in primiatives:
+
+            steer = np.clip(steer, -self.max_steering, self.max_steering)
+            times = np.linspace(0, T, num_steps)
+            positions = np.zeros((num_steps, 4))
+            inputs = np.zeros((num_steps, 2))
+
+            positions[0] = [x0, y0, theta0, phi0]
+            inputs[0] = [speed, steer]
+
+            for i in range(num_steps - 1):
+                x, y, theta, phi = positions[i]
+                current_phi = steer
+
+                x_next = x + speed * np.cos(theta) * dt
+                y_next = y + speed * np.sin(theta) * dt
+                theta_next = theta + (speed / self.turning_radius) * np.tan(current_phi) *dt
+                phi_next = current_phi
+
+                positions[i + 1] = [x_next, y_next, theta_next, phi_next]
+                inputs[i + 1] = [speed, steer]
+
+            final_config = positions[-1]
+            dist_to_goal = self.distance(final_config, config2)
+
+            if dist_to_goal < best_dist:
+                best_dist = dist_to_goal
+                best_plan = Plan(times, positions, inputs, dt=dt)
+
+        return best_plan if best_plan is not None else Plan(np.array([0.0]), np.array([config1]), np.array([0, 0]), dt=dt)
+
+
          
 
 
