@@ -420,6 +420,7 @@ class BicycleConfigurationSpace(ConfigurationSpace):
         # iterate through path segements in small increments
         final_time = combined_plan.times[-1]
         t = 0.0
+
         while t <= final_time:
             position, control = combined_plan.get(t)
             if self.check_collision(position):
@@ -468,4 +469,16 @@ class BicycleConfigurationSpace(ConfigurationSpace):
 
         This should return a cofiguration_space.Plan object.
         """
-        pass
+        x0, y0, theta0, phi0 = config1
+        x1, y1, theta1, phi1 = config2
+
+        primiatives = [
+            (self.step_size, 0),
+            (-self.step_size, 0),
+            (self.step_size, self.max_steering),
+            (self.step_size, -self.max_steering),
+             (-self.step_size, self.max_steering),
+             (-self.step_size, -self.max_steering)]
+         
+
+
