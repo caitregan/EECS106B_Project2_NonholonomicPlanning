@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/bin/env python
 
 #change back to python when in lab
 """
@@ -93,6 +93,12 @@ if __name__ == '__main__':
         ## Edit the max_iter, expand_dist, dt and prefix_time_length arguments to your needs.
         planner = RRTPlanner(config, max_iter=10000, expand_dist=0.8)
         plan = planner.plan_to_pose(controller.state, goal, dt=0.01, prefix_time_length=1)
+
+        # debug to make sure that we have a path when setting a seed
+        if plan is None:
+            print("No path was found.")
+        else:
+            print("Plan was found.")
 
     elif args.planner == 'opt':
         planner = OptimizationPlanner(config)

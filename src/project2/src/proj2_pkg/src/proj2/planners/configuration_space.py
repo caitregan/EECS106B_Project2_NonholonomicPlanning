@@ -10,6 +10,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from scipy.integrate import odeint
 from contextlib import contextmanager
+import dubins
 
 class Plan(object):
     """Data structure to represent a motion plan. Stores plans in the form of
@@ -248,133 +249,127 @@ class FreeEuclideanSpace(ConfigurationSpace):
         plan = Plan(times, positions, velocities, dt=self.dt)
         return plan
 
+
 class BicycleConfigurationSpace(ConfigurationSpace):
     """
-        The configuration space for a Bicycle modeled robot
-        Obstacles should be tuples (x, y, r), representing circles of 
-        radius r centered at (x, y)
-        We assume that the robot is circular and has radius equal to robot_radius
-        The state of the robot is defined as (x, y, theta, phi).
+    The configuration space for a Bicycle modeled robot.
+    Obstacles should be tuples (x, y, r), representing circles of 
+    radius r centered at (x, y).
+    We assume that the robot is circular and has radius equal to robot_radius.
+    The state of the robot is defined as (x, y, theta, phi).
     """
-    def __init__(self,
-                 x_bounds,
-                 y_bounds,
-                 start_config,
-                 end_config,
-                 obstacles,
-                 turning_radius=1.0,
-                 step_size=1.0,
-                 goal_bias=0.1,
-                 goal_zoom=0.1,
-                 dt=0.01):
-        
-        """parameters that need 
-        x_bounds = [x_min, x_max]
-        y_bounds = [y_min, y_max]
-        start_config: np.array(4) [x, y, theta, phi]
-        end_config: np.array(4) [x, y, theta, phi]
-        obstacles: tuple [x, y, r] s.t. r = radius
-        turning_radius: float
-        step_size: float 
-        goal_bias: float
-        goal_zoom: float
-        """
-        
-        # abstract class parameters that need to be implemented from superclass
-        dim = 4
-        low_lims = [x_bounds[0], y_bounds[0], -math.pi, math.pi]
-        high_lims = [x_bounds[0], y_bounds[1], -math.pi, math.pi]
-        
-        super(BicycleConfigurationSpace, self).__init__(
-            dim=dim, 
-            low_lims=low_lims, 
-            high_lims=high_lims, 
-            obstacles=obstacles,
-            dt=dt)
-        
-        # attributes turtlebot needs to know its enviroment
-        self.x_min, self.x_max = x_bounds
-        self.y_min, self.y_max = y_bounds
-        self.start = tuple(start_config)
-        self.goal = tuple(end_config)
 
-        # attributes that will aid in manuveability
+    def __init__(self, low_lims, high_lims, input_low_lims, input_high_lims, obstacles, robot_radius, turning_radius=1.0,
+                step_size=1.0,
+                goal_bias=0.1,
+                goal_zoom=0.1,
+                dt=0.01):
+  
+        dim = 4 
+        super(BicycleConfigurationSpace, self).__init__(dim, low_lims, high_lims, obstacles)
+        
+        # robot attributes
+        self.robot_radius = robot_radius
+        self.robot_length = 0.3 
+        self.input_low_lims = input_low_lims
+        self.input_high_lims = input_high_lims
+
+        # attributes for maneuverability
         self.turning_radius = turning_radius
         self.step_size = step_size
         self.max_steering = math.atan2(1.0, turning_radius)
-        
-        # probabilistic attributes that aid motion primatives from start -> end 
+
+        # probabilistic attributes that aid motion primitives from start -> end
         self.goal_bias_prob = goal_bias
         self.goal_zoom_prob = goal_zoom
 
-        # initialize a circular permiter for our end goal
+        # goal-related parameters
+        self.x_min, self.x_max = low_lims[0], high_lims[0]
+        self.y_min, self.y_max = low_lims[1], high_lims[1]
         span_x = self.x_max - self.x_min
         span_y = self.y_max - self.y_min
         self.goal_zoom_radius = 0.2 * max(span_x, span_y)
 
-        
+        # debugging
+        print(f"x_min: {self.x_min}, x_max: {self.x_max}")
+        print(f"y_min: {self.y_min}, y_max: {self.y_max}")
+        print(f"goal_zoom_radius: {self.goal_zoom_radius}")
+
+
     def distance(self, config1, config2):
-        """
-        configs should be numpy.ndarrays of size (4,) based on the bicycle dyanmics
-        """
-        # LaValle: Planning Algorithms -> (SO(2) metric space by comparing angles) ex. 5.2
-        
-        x1, x2, theta1, phi1 = config1
-        y1, y2, theta2, phi2 = config2
+       
+        pos1 = np.array(config1[:2])
+        pos2 = np.array(config2[:2])
+        theta1 = config1[2]
+        theta2 = config2[2]
 
-        # complex number representation 'a + bi' between two vectors
-        point_a = x1 * x2
-        point_b = y1 * y2
+        pos_dist = np.linalg.norm(pos2 - pos1)
 
-        return math.acos(point_a + point_b)  
+        # angular difference on SO(2)
+        dot = math.cos(theta1) * math.cos(theta2) + math.sin(theta1) * math.sin(theta2)
+
+        dot = max(-1.0, min(1.0, dot))
+        angle_diff = math.acos(dot)
+
+        return pos_dist + angle_diff
+    
 
     def sample_config(self, *args):
         """
-        Pick a random configuration from within our state boundaries.
-
-        You can pass in any number of additional optional arguments if you
-        would like to implement custom sampling heuristics. By default, the
-        RRT implementation passes in the goal as an additional argument,
-        which can be used to implement a goal-biasing heuristic.
+        Pick a random configuration from within our state boundaries, with:
+            1) goal bias,
+            2) goal 'zoom' sampling near the goal,
+            3) uniform sampling in the state space.
         """
 
-        r = random.sample()
-        if r < self.goal_bias_prob:
-            sample = self.goal
+        goal = args[0] if len(args) > 0 else None
 
-        elif r < self.goal_zoom_prob + self.goal_bias_prob:
+        while True:
+            # take sample from [0, 1]
+            alpha = random.random()
 
-            # sample near goal
-            gx, gy, gtheta, gphi = self.goal
-            raidus = self.goal_zoom_radius
-            angle = random.random() * 2 * math.pi
-            dist = random.random() * raidus
-            sx = max(self.x_min, min(self.x_max, gx + dist * math.cos(angle)))
-            sy = max(self.y_min, min(self.y_max, gy + dist * math.sin(angle)))
+   
+            if goal is not None and alpha < self.goal_bias_prob:
+                sample = tuple(goal)
 
-            # goal bias
-            if random.random() < 0.5:
-                stheta = gtheta + (random.random() * 0.5 - 0.25) * math.pi 
+
+            #  sample around the goal within self.goal_zoom_radius
+            elif goal is not None and alpha < (self.goal_bias_prob + self.goal_zoom_prob):
+                gx, gy, gtheta, gphi = goal
+                angle = random.uniform(0, 2 * math.pi)
+                dist = random.uniform(0, self.goal_zoom_radius)
+                
+                sx = gx + dist * math.cos(angle)
+                sy = gy + dist * math.sin(angle)
+                
+                # ensure map boundaries arent exceeded
+                sx = max(self.x_min, min(self.x_max, sx))
+                sy = max(self.y_min, min(self.y_max, sy))
+                
+                # bias orientation toward goal or randomize
+                if random.random() < 0.5:
+                    stheta = gtheta + (random.random() * 0.5 - 0.25) * math.pi 
+                    stheta = (stheta + math.pi) % (2 * math.pi) - math.pi
+                else:
+                    stheta = random.uniform(-math.pi, math.pi)
+                
+                sphi = random.uniform(-self.max_steering, self.max_steering)
+                sample = (sx, sy, stheta, sphi)
+
+            # take uniform sample in the full state space
             else:
+                sx = random.uniform(self.x_min, self.x_max)
+                sy = random.uniform(self.y_min, self.y_max)
                 stheta = random.uniform(-math.pi, math.pi)
-            sphi = random.uniform(-self.max_steering, self.max_steering)
-            sample = (sx, sy, (stheta + math.pi) % (2 * math.pi) - math.pi, sphi)
+                sphi = random.uniform(-self.max_steering, self.max_steering)
+                sample = (sx, sy, stheta, sphi)
 
-        else:
-            # uniform sampling in state space
-            sx = random.uniform(self.x_min, self.x_max)
-            sy = random.uniform(self.y_min, self.y_max)
-            stheta = random.uniform(-math.pi, math.pi)
-            sphi = random.uniform(-self.max_steering, self.max_steering)
-            sample = (sx, sy, stheta, sphi)
-        
-        # retry sample configuration until collison-free sample is found
-        if self.check_collision(sample):
-            return self.sample_config()
-        return sample
-        
+            if not self.check_collision(sample):
+                return sample
 
-
+    
+    
+    
     def check_collision(self, config):
         """
         Returns true if a configuration c is in collision
@@ -398,7 +393,7 @@ class BicycleConfigurationSpace(ConfigurationSpace):
                 if dist_squared <= (obs_r)**2:
                     return True
         return False
-
+    
     def check_path_collision(self, path):
         """
         Returns true if the input path is in collision. The path
@@ -439,6 +434,8 @@ class BicycleConfigurationSpace(ConfigurationSpace):
             return True
 
         return False 
+    
+
 
     def local_plan(self, config1, config2, dt=0.01):
         """
@@ -477,7 +474,6 @@ class BicycleConfigurationSpace(ConfigurationSpace):
         This should return a cofiguration_space.Plan object.
         """
         x0, y0, theta0, phi0 = config1
-        x1, y1, theta1, phi1 = config2
 
         primiatives = [
             (self.step_size, 0),
