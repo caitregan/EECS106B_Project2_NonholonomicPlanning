@@ -113,5 +113,7 @@ if __name__ == '__main__':
     planner.plot_execution()
 
     controller.execute_plan(plan)
-    print("Final State")
+    print("Final controller State")
     print(controller.state)
+
+    print(f"Final robot position: {plan.end_position()}")
