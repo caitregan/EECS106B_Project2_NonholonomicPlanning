@@ -32,7 +32,21 @@ class RRTGraph(object):
 
     def construct_path_to(self, c):
         c = tuple(c)
-        return Plan.chain_paths(self.construct_path_to(self.parent[c]), self.path[(self.parent[c], c)]) if self.parent[c] else None
+        chain = []
+        while self.parent[c] is not None:
+            parent = self.parent[c]
+            chain.append(self.path[(parent, c)])
+            c = parent
+        chain = chain[::-1]
+        plan = chain[0]
+        for p in chain[1:]:
+            plan = Plan.chain_paths(plan, p)
+        return plan
+
+
+    # def construct_path_to(self, c):
+    #     c = tuple(c)
+    #     return Plan.chain_paths(self.construct_path_to(self.parent[c]), self.path[(self.parent[c], c)]) if self.parent[c] else None
 
 class RRTPlanner(object):
 

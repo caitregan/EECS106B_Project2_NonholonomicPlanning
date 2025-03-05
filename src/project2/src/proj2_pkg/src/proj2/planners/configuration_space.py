@@ -321,6 +321,17 @@ class BicycleConfigurationSpace(ConfigurationSpace):
             2) goal 'zoom' sampling near the goal,
             3) uniform sampling in the state space.
         """
+        #np.random.seed(111)
+
+        # while True:
+        #     x = np.random.uniform(self.x_min, self.x_max)
+        #     y = np.random.uniform(self.y_min, self.y_max)
+        #     theta = np.random.uniform(-math.pi, math.pi)
+        #     phi = np.random.uniform(-self.max_steering, self.max_steering)
+
+        #     config = [x, y, theta, phi]
+        #     if not self.check_collision(config):
+        #         return config
 
         goal = args[0] if len(args) > 0 else None
 
@@ -366,8 +377,6 @@ class BicycleConfigurationSpace(ConfigurationSpace):
 
             if not self.check_collision(sample):
                 return sample
-
-    
     
     
     def check_collision(self, config):

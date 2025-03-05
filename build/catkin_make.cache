@@ -1,2 +1,2 @@
-project2/src/proj2_pkg
+project2/src/proj2_pkg:project2/src/stdr_simulator/stdr_gui:project2/src/stdr_simulator/stdr_launchers:project2/src/stdr_simulator/stdr_msgs:project2/src/stdr_simulator/stdr_parser:project2/src/stdr_simulator/stdr_resources:project2/src/stdr_simulator/stdr_robot:project2/src/stdr_simulator/stdr_samples:project2/src/stdr_simulator/stdr_server:project2/src/stdr_simulator/stdr_simulator
 -DCATKIN_DEVEL_PREFIX=/home/cc/ee106b/sp25/class/ee106b-abw/EECS106B_Project2_NonholonomicPlanning/devel -DCMAKE_INSTALL_PREFIX=/home/cc/ee106b/sp25/class/ee106b-abw/EECS106B_Project2_NonholonomicPlanning/install -G Unix Makefiles
